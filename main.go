@@ -65,7 +65,11 @@ func open(path string) (*sql.DB, error) {
 		  exit    integer,
 		  ts      integer,
 		  session text
-		);`); err != nil {
+		);
+
+		-- walk rows newest-first and stop at the limit instead of scanning
+		-- the whole table and sorting it on every invocation.
+		create index if not exists history_ts_cmd on history(ts desc, cmd);`); err != nil {
 		db.Close()
 		return nil, err
 	}
