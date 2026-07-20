@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin/go-humanize"
 	"github.com/sahilm/fuzzy"
 	_ "modernc.org/sqlite"
 )
@@ -77,9 +79,14 @@ func open(path string) (*sql.DB, error) {
 	return db, nil
 }
 
-func loadCandidates(db *sql.DB) ([]string, error) {
+type candidate struct {
+	cmd string
+	ts  time.Time
+}
+
+func loadCandidates(db *sql.DB) ([]candidate, error) {
 	rows, err := db.Query(`
-		select cmd from history
+		select cmd, ts from history
 		order by ts desc
 		limit 10000`,
 	)
@@ -88,11 +95,12 @@ func loadCandidates(db *sql.DB) ([]string, error) {
 	}
 	defer rows.Close()
 
-	var out []string
+	var out []candidate
 	for rows.Next() {
 		var c string
-		if err := rows.Scan(&c); err == nil {
-			out = append(out, c)
+		var ts int64
+		if err := rows.Scan(&c, &ts); err == nil {
+			out = append(out, candidate{cmd: c, ts: time.Unix(ts, 0)})
 		}
 	}
 	return out, rows.Err()
@@ -297,11 +305,16 @@ const maxRows = 12
 
 type model struct {
 	textinput textinput.Model
-	all       []string
-	filtered  []string
+	all       []candidate
+	filtered  []candidate
 	cursor    int
 	selected  string
 }
+
+type candidateSource []candidate
+
+func (c candidateSource) String(i int) string { return c[i].cmd }
+func (c candidateSource) Len() int            { return len(c) }
 
 func (m *model) filter() {
 	q := m.textinput.Value()
@@ -309,10 +322,10 @@ func (m *model) filter() {
 	if strings.TrimSpace(q) == "" {
 		m.filtered = m.all
 	} else {
-		matches := fuzzy.Find(q, m.all)
-		out := make([]string, len(matches))
+		matches := fuzzy.FindFrom(q, candidateSource(m.all))
+		out := make([]candidate, len(matches))
 		for i, mt := range matches {
-			out[i] = mt.Str
+			out[i] = m.all[mt.Index]
 		}
 		m.filtered = out
 	}
@@ -326,6 +339,30 @@ func (m *model) filter() {
 	}
 }
 
+// shortRelTime renders t as a compact "time ago" string (e.g. "3min", "2d").
+func shortRelTime(t time.Time) string {
+	if t.Unix() == 0 {
+		return "never"
+	}
+	return humanize.CustomRelTime(t, time.Now(), "", "", []humanize.RelTimeMagnitude{
+		{D: time.Second, Format: "now", DivBy: time.Second},
+		{D: 2 * time.Second, Format: "1s", DivBy: 1},
+		{D: time.Minute, Format: "%ds", DivBy: time.Second},
+		{D: 2 * time.Minute, Format: "1m", DivBy: 1},
+		{D: time.Hour, Format: "%dm", DivBy: time.Minute},
+		{D: 2 * time.Hour, Format: "1hr", DivBy: 1},
+		{D: humanize.Day, Format: "%dhrs", DivBy: time.Hour},
+		{D: 2 * humanize.Day, Format: "1d", DivBy: 1},
+		{D: 20 * humanize.Day, Format: "%dd", DivBy: humanize.Day},
+		{D: 8 * humanize.Week, Format: "%dw", DivBy: humanize.Week},
+		{D: humanize.Year, Format: "%dmo", DivBy: humanize.Month},
+		{D: 18 * humanize.Month, Format: "1y", DivBy: 1},
+		{D: 2 * humanize.Year, Format: "2y", DivBy: 1},
+		{D: humanize.LongTime, Format: "%dy", DivBy: humanize.Year},
+		{D: math.MaxInt64, Format: "a long while ago", DivBy: 1},
+	})
+}
+
 func (m *model) Init() tea.Cmd { return textinput.Blink }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -336,7 +373,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter", "tab":
 			if m.cursor >= 0 && m.cursor < len(m.filtered) {
-				m.selected = m.filtered[m.cursor]
+				m.selected = m.filtered[m.cursor].cmd
 			}
 			return m, tea.Quit
 		case "up", "ctrl+p":
@@ -368,12 +405,26 @@ func (m *model) View() string {
 		start = m.cursor - maxRows + 1
 	}
 	end := min(start+maxRows, len(m.filtered))
+
+	// width of the widest relative time in view, so commands line up.
+	tsWidth := 0
 	for i := start; i < end; i++ {
-		line := strings.ReplaceAll(m.filtered[i], "\n", "  ")
+		if w := lipgloss.Width(shortRelTime(m.filtered[i].ts)); w > tsWidth {
+			tsWidth = w
+		}
+	}
+
+	for i := start; i < end; i++ {
+		c := m.filtered[i]
+		line := strings.ReplaceAll(c.cmd, "\n", "  ")
+		ts := styleDim.Render(fmt.Sprintf("%*s", tsWidth, shortRelTime(c.ts)))
 		if i == m.cursor {
-			b.WriteString(styleCursor.Render("  " + line))
+			b.WriteString(ts)
+			b.WriteByte(' ')
+			b.WriteString(styleCursor.Render(line))
 		} else {
-			b.WriteString("  ")
+			b.WriteString(ts)
+			b.WriteByte(' ')
 			b.WriteString(line)
 		}
 		b.WriteByte('\n')
