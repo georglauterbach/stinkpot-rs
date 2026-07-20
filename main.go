@@ -37,7 +37,7 @@ func dbDir() string {
 		dir = filepath.Join(os.Getenv("HOME"), ".local", "share")
 	}
 
-	dir = filepath.Join(dir, "tortu")
+	dir = filepath.Join(dir, "stinkpot")
 
 	return dir
 }
@@ -125,7 +125,7 @@ func add(args []string) {
 
 	db, err := open(dbPath())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		return
 	}
 	defer db.Close()
@@ -139,9 +139,9 @@ func add(args []string) {
 		   exit    = excluded.exit,
 		   ts      = excluded.ts,
 		   session = excluded.session`,
-		cmd, cwd, *exit, time.Now().Unix(), os.Getenv("TORTU_SESSION"),
+		cmd, cwd, *exit, time.Now().Unix(), os.Getenv("stinkpot_SESSION"),
 	); err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 	}
 }
 
@@ -152,13 +152,13 @@ func search(args []string) {
 
 	db, err := open(dbPath())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	cands, err := loadCandidates(db)
 	db.Close()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 
@@ -176,7 +176,7 @@ func search(args []string) {
 	p := tea.NewProgram(m, tea.WithOutput(os.Stderr), tea.WithInput(os.Stdin), tea.WithAltScreen())
 	res, err := p.Run()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	if fm, ok := res.(*model); ok && fm.selected != "" {
@@ -187,20 +187,20 @@ func search(args []string) {
 func list(_ []string) {
 	db, err := open(dbPath())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
 	rows, err := db.Query(`select ts, exit, cmd from history order by id desc limit 50`)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		if rows.Err() != nil {
-			fmt.Fprintln(os.Stderr, "tortu:", err)
+			fmt.Fprintln(os.Stderr, "stinkpot:", err)
 			os.Exit(1)
 		}
 		var ts int64
@@ -227,21 +227,21 @@ func importBash(args []string) {
 
 	f, err := os.Open(path)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	defer f.Close()
 
 	db, err := open(dbPath())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
 	tx, err := db.Begin()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 
@@ -250,7 +250,7 @@ func importBash(args []string) {
 		on conflict(cmd) do update set ts = max(ts, excluded.ts)`)
 	if err != nil {
 		_ = tx.Rollback()
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 	defer stmt.Close()
@@ -278,7 +278,7 @@ func importBash(args []string) {
 
 		if _, err := stmt.Exec(cmd, "", 0, ts, ""); err != nil {
 			_ = tx.Rollback()
-			fmt.Fprintln(os.Stderr, "tortu:", err)
+			fmt.Fprintln(os.Stderr, "stinkpot:", err)
 			os.Exit(1)
 		}
 
@@ -288,16 +288,16 @@ func importBash(args []string) {
 
 	if err := sc.Err(); err != nil {
 		_ = tx.Rollback()
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 
 	if err := tx.Commit(); err != nil {
-		fmt.Fprintln(os.Stderr, "tortu:", err)
+		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "tortu: imported %d commands from %s\n", n, path)
+	fmt.Fprintf(os.Stderr, "stinkpot: imported %d commands from %s\n", n, path)
 }
 
 // ui
@@ -436,32 +436,32 @@ func (m *model) View() string {
 }
 
 // bash side of things
-const initScript = `# run eval "$(tortu init)" at startup
-__tortu_record() {
+const initScript = `# run eval "$(stinkpot init)" at startup
+__stinkpot_record() {
   local exit=$?
   local cmd
   cmd=$(HISTTIMEFORMAT='' history 1 | sed '1 s/^[[:space:]]*[0-9]\{1,\}[[:space:]]*//')
-  [ -n "$cmd" ] && tortu add --exit "$exit" -- "$cmd"
+  [ -n "$cmd" ] && stinkpot add --exit "$exit" -- "$cmd"
 }
 case "$PROMPT_COMMAND" in
-  *__tortu_record*) ;;
-  *) PROMPT_COMMAND="__tortu_record${PROMPT_COMMAND:+; $PROMPT_COMMAND}" ;;
+  *__stinkpot_record*) ;;
+  *) PROMPT_COMMAND="__stinkpot_record${PROMPT_COMMAND:+; $PROMPT_COMMAND}" ;;
 esac
 
-__tortu_search() {
+__stinkpot_search() {
   local out
-  out=$(tortu search -- "$READLINE_LINE") || return
+  out=$(stinkpot search -- "$READLINE_LINE") || return
   if [ -n "$out" ]; then
     READLINE_LINE="$out"
     READLINE_POINT=${#READLINE_LINE}
   fi
 }
-bind -x '"\C-r": __tortu_search'
+bind -x '"\C-r": __stinkpot_search'
 `
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: tortu <init|add|search|list|import>")
+		fmt.Fprintln(os.Stderr, "usage: stinkpot <init|add|search|list|import>")
 		os.Exit(1)
 	}
 
@@ -477,7 +477,7 @@ func main() {
 	case "import":
 		importBash(os.Args[2:])
 	default:
-		fmt.Fprintf(os.Stderr, "tortu: unknown command %q\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "stinkpot: unknown command %q\n", os.Args[1])
 		os.Exit(1)
 	}
 }

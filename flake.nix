@@ -10,12 +10,12 @@
     supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
     forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f nixpkgs.legacyPackages.${system});
 
-    tortuPackage = {
+    stinkpotPackage = {
       lib,
       buildGoModule,
     }:
       buildGoModule {
-        pname = "tortu";
+        pname = "stinkpot";
         version = "0.1.0";
         src = lib.cleanSource ./.;
         vendorHash = "sha256-iDlU/176inkilehXft25KjiLt7rUtlMGqod22A3O/ko=";
@@ -23,7 +23,7 @@
         ldflags = ["-s" "-w"];
         meta = {
           description = "sqlite-backed shell history";
-          mainProgram = "tortu";
+          mainProgram = "stinkpot";
           platforms = lib.platforms.unix;
         };
       };
@@ -31,34 +31,34 @@
     formatter = forAllSystems (pkgs: pkgs.alejandra);
 
     packages = forAllSystems (pkgs: rec {
-      tortu = pkgs.callPackage tortuPackage {};
-      default = tortu;
+      stinkpot = pkgs.callPackage stinkpotPackage {};
+      default = stinkpot;
     });
 
     overlays.default = final: _prev: {
-      tortu = final.callPackage tortuPackage {};
+      stinkpot = final.callPackage stinkpotPackage {};
     };
 
-    homeManagerModules.tortu = {
+    homeManagerModules.stinkpot = {
       config,
       lib,
       pkgs,
       ...
     }: let
-      cfg = config.programs.tortu;
+      cfg = config.programs.stinkpot;
     in {
-      options.programs.tortu = {
-        enable = lib.mkEnableOption "tortu, a tiny sqlite-backed shell history";
+      options.programs.stinkpot = {
+        enable = lib.mkEnableOption "stinkpot, a tiny sqlite-backed shell history";
 
         package = lib.mkOption {
           type = lib.types.package;
           default = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
-          description = "The tortu package to use.";
+          description = "The stinkpot package to use.";
         };
 
         enableBashIntegration = lib.hm.shell.mkBashIntegrationOption {
           inherit config;
-          extraDescription = "Bind `ctrl-r` to open the tortu search and record commands into tortu.";
+          extraDescription = "Bind `ctrl-r` to open the stinkpot search and record commands into stinkpot.";
         };
       };
 
@@ -70,7 +70,7 @@
         '';
       };
     };
-    homeManagerModules.default = self.homeManagerModules.tortu;
+    homeManagerModules.default = self.homeManagerModules.stinkpot;
 
     devShells = forAllSystems (pkgs: {
       default = pkgs.mkShell {
