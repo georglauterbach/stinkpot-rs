@@ -71,7 +71,7 @@ func open(path string) (*sql.DB, error) {
 		-- walk rows newest-first and stop at the limit instead of scanning
 		-- the whole table and sorting it on every invocation.
 		create index if not exists history_ts_cmd on history(ts desc, cmd);`); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
@@ -92,7 +92,7 @@ func loadCandidates(db *sql.DB) ([]candidate, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []candidate
 	for rows.Next() {
@@ -127,7 +127,7 @@ func add(args []string) {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		return
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// re-run of the same command bumps its timestamp
 	cwd, _ := os.Getwd()
@@ -155,7 +155,7 @@ func search(args []string) {
 		os.Exit(1)
 	}
 	cands, err := loadCandidates(db)
-	db.Close()
+	_ = db.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
@@ -192,14 +192,14 @@ func list(_ []string) {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	rows, err := db.Query(`select ts, exit, cmd from history order by id desc limit 50`)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		if rows.Err() != nil {
 			fmt.Fprintln(os.Stderr, "stinkpot:", err)
@@ -232,14 +232,14 @@ func importBash(args []string) {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	db, err := open(dbPath())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -255,7 +255,7 @@ func importBash(args []string) {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
 		os.Exit(1)
 	}
-	defer stmt.Close()
+	defer func() { _ = stmt.Close() }()
 
 	sc := bufio.NewScanner(f)
 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // tolerate long command lines
