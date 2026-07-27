@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/dustin/go-humanize"
 	"github.com/sahilm/fuzzy"
 	_ "modernc.org/sqlite"
@@ -26,7 +26,6 @@ var (
 )
 
 func init() {
-	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stderr))
 	styleCursor = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("4"))
 	styleDim = lipgloss.NewStyle().Faint(true)
 }
@@ -162,18 +161,21 @@ func search(args []string) {
 		os.Exit(1)
 	}
 
-	textinput := textinput.New()
-	textinput.Prompt = "> "
-	textinput.Placeholder = "search history..."
-	textinput.PlaceholderStyle = styleDim
-	textinput.SetValue(initial)
-	textinput.CursorEnd()
-	textinput.Focus()
+	ti := textinput.New()
+	ti.Prompt = "> "
+	ti.Placeholder = "search history..."
+	styles := textinput.DefaultStyles(true)
+	styles.Focused.Placeholder = styleDim
+	styles.Blurred.Placeholder = styleDim
+	ti.SetStyles(styles)
+	ti.SetValue(initial)
+	ti.CursorEnd()
+	ti.Focus()
 
-	m := &model{textinput: textinput, all: cands}
+	m := &model{textinput: ti, all: cands}
 	m.filter()
 
-	p := tea.NewProgram(m, tea.WithOutput(os.Stderr), tea.WithInput(os.Stdin), tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithOutput(os.Stderr), tea.WithInput(os.Stdin))
 	res, err := p.Run()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "stinkpot:", err)
@@ -366,7 +368,7 @@ func shortRelTime(t time.Time) string {
 func (m *model) Init() tea.Cmd { return textinput.Blink }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if key, ok := msg.(tea.KeyMsg); ok {
+	if key, ok := msg.(tea.KeyPressMsg); ok {
 		switch key.String() {
 		case "ctrl+c", "esc":
 			m.selected = ""
@@ -395,7 +397,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) View() string {
+func (m *model) View() tea.View {
 	var b strings.Builder
 	b.WriteString(m.textinput.View())
 	b.WriteByte('\n')
@@ -432,7 +434,9 @@ func (m *model) View() string {
 
 	b.WriteString(styleDim.Render(fmt.Sprintf(
 		"  %d matches · ↑/↓ move · enter accept · esc cancel", len(m.filtered))))
-	return b.String()
+	v := tea.NewView(b.String())
+	v.AltScreen = true
+	return v
 }
 
 // bash side of things
