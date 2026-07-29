@@ -90,15 +90,13 @@ jobs:
           export "CARGO_TARGET_${TARGET_ENV}_LINKER=${{ matrix.linker }}"
           cargo build --release
 
-          mkdir -p target/.artifacts
-          mv "target/${{ matrix.target }}/release/stinkpot" \
-            "target/.artifacts/stinkpot-${{ github.ref_name }}-${{ matrix.target }}"
+          mv "target/${{ matrix.target }}/release/stinkpot" "target/stinkpot-${{ matrix.target }}"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: stinkpot-${{ matrix.target }}
-          path: target/.artifacts/stinkpot-${{ github.ref_name }}-${{ matrix.target }}
+          path: target/stinkpot-${{ matrix.target }}
           if-no-files-found: error
 
   publish:
@@ -121,5 +119,5 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            target/.artifacts/stinkpot-${{ github.ref_name }}-x86_64-unknown-linux-musl
-            target/.artifacts/stinkpot-${{ github.ref_name }}-aarch64-unknown-linux-musl
+            target/stinkpot-x86_64-unknown-linux-musl
+            target/stinkpot-aarch64-unknown-linux-musl
