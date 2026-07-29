@@ -1,8 +1,7 @@
 ---
 rules:
   unpinned-images:
-    ignore:
-      - release.yml:58
+    disable: true
   unpinned-uses:
     disable: true
   template-injection:
