@@ -1,0 +1,67 @@
+[package]
+name = "stinkpot"
+version = "0.0.0"
+edition = "2024"
+description = "A SQLite-backed shell-history searcher"
+readme = "README.md"
+repository = "https://github.com/georglauterbach/stinkpot-rs"
+license = ""
+publish = false
+
+[dependencies]
+clap = { version = "4.6", default-features = true, features = [
+  "cargo",
+  "derive",
+  "env",
+  "string",
+] }
+crossterm = { version = "0.29", default-features = false, features = ["events"] }
+fuzzy-matcher = { version = "0.3", default-features = false }
+ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
+rusqlite = { version = "0.37", default-features = true, features = ["bundled"] }
+thiserror = { version = "2.0.19", default-features = false }
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+
+[lints]
+
+# ref: https://doc.rust-lang.org/stable/clippy/index.html
+[lints.clippy]
+# Enable all lints (correctness, suspicious, style, complexity, perf)
+all = { level = "deny", priority = -1 }
+missing_docs_in_private_items = { level = "deny", priority = 1 }
+multiple_crate_versions = { level = "allow", priority = 1 }
+
+# Lints for Cargo.toml
+cargo = { level = "deny", priority = -1 }
+cargo_common_metadata = { level = "allow", priority = 1 }
+
+# Additional lints
+nursery = { level = "deny", priority = -1 } # strict lints with occasional false positives
+pedantic = { level = "deny", priority = -1 } # new lints under development
+
+# Lints that deny panics
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+unchecked_time_subtraction = "deny"
+string_slice = "deny"
+panic_in_result_fn = "deny"
+panic = "deny"
+exit = "deny"
+
+[lints.rust]
+missing_debug_implementations = "deny"
+missing_docs = "deny"
+
+# ref: https://doc.rust-lang.org/rustdoc/index.html
+[lints.rustdoc]
+all = { level = "deny", priority = 1 }
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "allow"

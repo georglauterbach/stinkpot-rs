@@ -1,0 +1,92 @@
+---
+name: Release
+run-name: Release
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  push:
+    paths: [ src/**, .github/** ]
+    tags: [ v*.*.* ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  release-build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    container: docker.io/rust:1.97.1-slim-trixie
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            linker: x86_64-linux-musl-gcc
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-24.04-arm
+            linker: aarch64-linux-musl-gcc
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Packages
+        run: |
+          apt-get --yes --quiet=2 update
+          apt-get --yes install gcc musl-tools pkg-config
+
+      - name: Build Artifacts
+        run: |
+          readonly VERSION=${{ github.ref_name }}
+          sed -i -E "s/^(version =).*/\1 \"${VERSION#v}\"/" Cargo.toml
+
+          rustup target add "${{ matrix.target }}"
+          export CARGO_BUILD_TARGET=${{ matrix.target }}
+          TARGET_ENV=$(echo "${{ matrix.target }}" | tr 'a-z-' 'A-Z_')
+          export "CARGO_TARGET_${TARGET_ENV}_LINKER=${{ matrix.linker }}"
+          cargo build --release
+
+          mkdir -p target/.artifacts
+          mv "target/${{ matrix.target }}/release/stinkpot" \
+            "target/.artifacts/stinkpot-${{ matrix.target }}"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stinkpot-${{ matrix.target }}
+          path: target/.artifacts/stinkpot-${{ matrix.target }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish Release
+    needs: release-build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # needed to publish release artifacts
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: target/.artifacts
+          merge-multiple: true
+
+      - name: Publish Artifacts to Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            target/.artifacts/stinkpot-x86_64-unknown-linux-musl
+            target/.artifacts/stinkpot-aarch64-unknown-linux-musl

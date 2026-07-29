@@ -1,0 +1,10 @@
+---
+rules:
+  unpinned-images:
+    disable: true
+  unpinned-uses:
+    disable: true
+  template-injection:
+    disable: true
+  superfluous-actions:
+    disable: true

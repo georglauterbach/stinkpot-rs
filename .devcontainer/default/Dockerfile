@@ -1,0 +1,17 @@
+# We accept the following hadolint issues because
+# this is a Development Container.
+#
+# hadolint global ignore=DL3008,DL3009
+
+FROM docker.io/rust:1.97.1-slim-trixie
+
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc
+ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=x86_64-linux-musl-gcc
+
+RUN useradd --create-home --shell /bin/bash user     \
+    && passwd --delete root                          \
+    && apt-get update                                \
+    && apt-get install --yes --no-install-recommends \
+      git less ssh xz-utils                          \
+      gcc musl-tools pkg-config zstd                 \
+      binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu

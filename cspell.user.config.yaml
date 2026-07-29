@@ -1,0 +1,17 @@
+---
+ignoreWords:
+  - atuin
+  - autoincrement
+  - codegen
+  - histfile
+  - histtimeformat
+  - oppi
+  - softprops
+  - trixie
+  - upserted
+
+  - crossterm
+  - ratatui
+  - rusqlite
+  - stinkpot
+  - thiserror
