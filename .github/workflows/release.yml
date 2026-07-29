@@ -1,0 +1,86 @@
+---
+name: Release
+run-name: Release
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths: [ src/**, .github/** ]
+    tags: [ '*.*.*' ]
+  pull_request:
+    branches: [ '**' ]
+    paths: [ src/**, .github/** ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+# Restrict default permissions for all jobs to read-only
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Release
+    runs-on: ubuntu-latest
+    container: docker.io/rust:1.97.1-slim-trixie
+
+    permissions:
+      contents: write # Required to checkout the repository and push to a release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install Packages
+        run: |
+          apt-get --yes --quiet=2 update
+          apt-get --yes install binutils-aarch64-linux-gnu gcc gcc-aarch64-linux-gnu musl-tools pkg-config zstd
+
+      - name: Test & Lint Code
+        run: |
+          cargo fmt    --all                              -- --check
+          cargo clippy --workspace --quiet --all-features -- -D warnings
+          cargo doc    --workspace --quiet --no-deps --document-private-items
+
+      - name: Check
+        run: cargo check
+
+      - name: '[Release] Build Final Archive and Binary'
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          readonly VERSION=${{ github.ref_name }}
+          sed -i -E "s/^(version =).*/\1 \"${VERSION#v}\"/" Cargo.toml
+
+          rustup target add x86_64-unknown-linux-musl
+          export CARGO_BUILD_TARGET=x86_64-unknown-linux-musl
+          export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=x86_64-linux-musl-gcc
+          cargo build --release
+
+          rustup target add aarch64-unknown-linux-musl
+          export CARGO_BUILD_TARGET=aarch64-unknown-linux-musl
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc
+          cargo build --release
+
+          cd target
+          mkdir -p .artifacts
+
+          mv x86_64-unknown-linux-musl/release/stinkpot \
+            .artifacts/stinkpot-${{ github.ref_name }}-x86_64-unknown-linux-musl
+          mv aarch64-unknown-linux-musl/release/stinkpot \
+            .artifacts/stinkpot-${{ github.ref_name }}-aarch64-unknown-linux-musl
+
+      - name: '[Release] Publish Artifacts to Release'
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            code/target/.artifacts/stinkpot-${{ github.ref_name }}-x86_64-unknown-linux-musl
+            code/target/.artifacts/stinkpot-${{ github.ref_name }}-aarch64-unknown-linux-musl

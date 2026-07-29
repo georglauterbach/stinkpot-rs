@@ -1,0 +1,26 @@
+{
+  "name": "default",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "docker.packages.rsint.net/ghcr.io/georglauterbach/dev-container-features/lang-rust:0.5": {},
+    "docker.packages.rsint.net/ghcr.io/georglauterbach/dev-container-features/lang-sh:0.6": {}
+  },
+  "containerUser": "user",
+  "remoteUser": "user",
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "edwinhuish.better-comments-next"
+      ],
+      "settings": {
+        // * extensions::vadimcn.vscode-lldb
+        "lldb.launch.preRunCommands": [
+          "command script import ${containerEnv:RUST_PRETTIFIER_FOR_LLDB_FILE}"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+[package]
+name = "stinkpot"
+version = "0.0.0"
+edition = "2024"
+description = "An SQLite-backed shell-history searcher"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.6", default-features = true, features = [
+  "cargo",
+  "derive",
+  "env",
+  "string",
+] }
+crossterm = { version = "0.29", default-features = false, features = ["events"] }
+fuzzy-matcher = { version = "0.3", default-features = false }
+ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
+rusqlite = { version = "0.37", default-features = true, features = ["bundled"] }
+thiserror = { version = "2.0.19", default-features = false }
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+
+[lints]
+# Clippy: https://doc.rust-lang.org/stable/clippy/index.html
+[lints.clippy]
+# enable all lints that are on by default
+# (correctness, suspicious, style, complexity, perf)
+all = "deny"
+# enable lints for the Cargo manifest file, a.k.a. Cargo.toml.
+cargo = { level = "deny", priority = 0 }
+cargo_common_metadata = { level = "allow", priority = 1 }
+# enable lints for missing documentation on private items
+missing_docs_in_private_items = "deny"
+multiple_crate_versions = { level = "allow", priority = 1 }
+# enable lints which are rather strict
+# or have occasional false positives
+nursery = "deny"
+# enable new lints that are still under development
+pedantic = "deny"
+
+[lints.rust]
+missing_debug_implementations = "deny"
+missing_docs = "deny"
+
+# Rustdoc: https://doc.rust-lang.org/rustdoc/index.html
+[lints.rustdoc]
+all = "deny"
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "allow"
