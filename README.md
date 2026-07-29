@@ -25,7 +25,7 @@ Start by importing your existing bash history into stinkpot:
 stinkpot import
 ```
 
-Hit ctrl+r at your shell to trigger a search. Hit tab or enter to accept the selection. The history database is stored in `~/.local/share/stinkpot`. If upgrades break the DB, just delete it and run the import command again.
+Hit `ctrl+r` in your shell to trigger a search. Hit tab or enter to accept the selection. The history database is stored in `~/.local/share/stinkpot`.
 
 ## Development
 

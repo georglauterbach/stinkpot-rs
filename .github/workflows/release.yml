@@ -25,13 +25,10 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Release
+  check:
+    name: Check
     runs-on: ubuntu-latest
     container: docker.io/rust:1.97.1-slim-trixie
-
-    permissions:
-      contents: write # Required to checkout the repository and push to a release
 
     steps:
       - name: Checkout
@@ -42,7 +39,7 @@ jobs:
       - name: Install Packages
         run: |
           apt-get --yes --quiet=2 update
-          apt-get --yes install binutils-aarch64-linux-gnu gcc gcc-aarch64-linux-gnu musl-tools pkg-config zstd
+          apt-get --yes install gcc pkg-config
 
       - name: Test & Lint Code
         run: |
@@ -53,34 +50,76 @@ jobs:
       - name: Check
         run: cargo check
 
-      - name: '[Release] Build Final Archive and Binary'
-        if: startsWith(github.ref, 'refs/tags/v')
+  release-build:
+    name: Release Build (${{ matrix.target }})
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: check
+    runs-on: ${{ matrix.os }}
+    container: docker.io/rust:1.97.1-slim-trixie
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            linker: x86_64-linux-musl-gcc
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-24.04-arm
+            linker: aarch64-linux-musl-gcc
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Packages
+        run: |
+          apt-get --yes --quiet=2 update
+          apt-get --yes install gcc musl-tools pkg-config
+
+      - name: Build Release Binary
         run: |
           readonly VERSION=${{ github.ref_name }}
           sed -i -E "s/^(version =).*/\1 \"${VERSION#v}\"/" Cargo.toml
 
-          rustup target add x86_64-unknown-linux-musl
-          export CARGO_BUILD_TARGET=x86_64-unknown-linux-musl
-          export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=x86_64-linux-musl-gcc
+          rustup target add "${{ matrix.target }}"
+          export CARGO_BUILD_TARGET=${{ matrix.target }}
+          TARGET_ENV=$(echo "${{ matrix.target }}" | tr 'a-z-' 'A-Z_')
+          export "CARGO_TARGET_${TARGET_ENV}_LINKER=${{ matrix.linker }}"
           cargo build --release
 
-          rustup target add aarch64-unknown-linux-musl
-          export CARGO_BUILD_TARGET=aarch64-unknown-linux-musl
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc
-          cargo build --release
+          mkdir -p target/.artifacts
+          mv "target/${{ matrix.target }}/release/stinkpot" \
+            "target/.artifacts/stinkpot-${{ github.ref_name }}-${{ matrix.target }}"
 
-          cd target
-          mkdir -p .artifacts
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stinkpot-${{ matrix.target }}
+          path: target/.artifacts/stinkpot-${{ github.ref_name }}-${{ matrix.target }}
+          if-no-files-found: error
 
-          mv x86_64-unknown-linux-musl/release/stinkpot \
-            .artifacts/stinkpot-${{ github.ref_name }}-x86_64-unknown-linux-musl
-          mv aarch64-unknown-linux-musl/release/stinkpot \
-            .artifacts/stinkpot-${{ github.ref_name }}-aarch64-unknown-linux-musl
+  publish:
+    name: Publish Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: release-build
+    runs-on: ubuntu-latest
 
-      - name: '[Release] Publish Artifacts to Release'
-        if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: target/.artifacts
+          merge-multiple: true
+
+      - name: Publish Artifacts to Release
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            code/target/.artifacts/stinkpot-${{ github.ref_name }}-x86_64-unknown-linux-musl
-            code/target/.artifacts/stinkpot-${{ github.ref_name }}-aarch64-unknown-linux-musl
+            target/.artifacts/stinkpot-${{ github.ref_name }}-x86_64-unknown-linux-musl
+            target/.artifacts/stinkpot-${{ github.ref_name }}-aarch64-unknown-linux-musl
