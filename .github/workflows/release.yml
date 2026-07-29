@@ -20,7 +20,6 @@ defaults:
   run:
     shell: bash
 
-# Restrict default permissions for all jobs to read-only
 permissions:
   contents: read
 
@@ -90,13 +89,15 @@ jobs:
           export "CARGO_TARGET_${TARGET_ENV}_LINKER=${{ matrix.linker }}"
           cargo build --release
 
-          mv "target/${{ matrix.target }}/release/stinkpot" "target/stinkpot-${{ matrix.target }}"
+          mkdir -p target/.artifacts
+          mv "target/${{ matrix.target }}/release/stinkpot" \
+            "target/.artifacts/stinkpot-${{ matrix.target }}"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: stinkpot-${{ matrix.target }}
-          path: target/stinkpot-${{ matrix.target }}
+          path: target/.artifacts/stinkpot-${{ matrix.target }}
           if-no-files-found: error
 
   publish:
@@ -106,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write # Needed to publish release artifacts
+      contents: write # needed to publish release artifacts
 
     steps:
       - name: Download Artifacts
