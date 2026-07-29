@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write # Needed to publish release artifacts
 
     steps:
       - name: Download Artifacts
