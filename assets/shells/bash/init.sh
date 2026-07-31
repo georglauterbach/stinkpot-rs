@@ -5,15 +5,14 @@ __stinkpot_record() {
   local CMD EXIT=${?}
   CMD=$(HISTTIMEFORMAT='' history 1 | sed '1 s/^[[:space:]]*[0-9]\{1,\}[[:space:]]*//')
   [[ -n ${CMD} ]] && stinkpot add --exit "${EXIT}" -- "${CMD}"
+  # Preserve the user command's status for later PROMPT_COMMAND entries (e.g. Starship)
+  return "${EXIT}"
 }
 
 __stinkpot_search() {
   local OUT
   OUT=$(stinkpot search -- "${READLINE_LINE}") || return
-  if [[ -n ${OUT} ]]; then
-    READLINE_LINE=${OUT}
-    READLINE_POINT=${#READLINE_LINE}
-  fi
+  [[ -n ${OUT} ]] && { READLINE_LINE=${OUT} ; READLINE_POINT=${#READLINE_LINE} ; }
 }
 
 if [[ ${PROMPT_COMMAND} != *__stinkpot_record* ]]; then
