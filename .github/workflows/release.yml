@@ -94,7 +94,7 @@ jobs:
             "target/.artifacts/stinkpot-${{ matrix.target }}"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stinkpot-${{ matrix.target }}
           path: target/.artifacts/stinkpot-${{ matrix.target }}
