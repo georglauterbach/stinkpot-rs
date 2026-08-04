@@ -4,7 +4,7 @@
 
 > [!note]
 >
-> This is a fork [`tangled.org/oppi.li/stinkpot`](https://tangled.org/oppi.li/stinkpot).
+> This is a fork of [`tangled.org/oppi.li/stinkpot`](https://tangled.org/oppi.li/stinkpot).
 >
 >The original author had been using [Atuin], but without actually employing "most of its features: the sync server, Atuin AI, dotfiles manager, script manager or the KV store. \[The\] only use case for atuin was the session agnostic history management, and the searcher TUI. stinkpot provides these while being a small Go binary."
 >
@@ -13,10 +13,11 @@ name.
 
 ## Usage
 
-Call eval the init script in your shell setup:
+Source the script in your shell's setup:
 
 ```bash
-eval "$(stinkpot init bash)"
+# shellcheck source=/dev/null
+source <(stinkpot init bash)
 ```
 
 Start by importing your existing bash history into stinkpot:
