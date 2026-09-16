@@ -17,9 +17,9 @@ clap = { version = "4.6", default-features = true, features = [
 ] }
 crossterm = { version = "0.29", default-features = false, features = ["events"] }
 fuzzy-matcher = { version = "0.3", default-features = false }
-ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
-rusqlite = { version = "0.37", default-features = true, features = ["bundled"] }
-thiserror = { version = "2.0.19", default-features = false }
+ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
+rusqlite = { version = "0.40", default-features = true, features = ["bundled"] }
+thiserror = { version = "2.0.20", default-features = false }
 
 [profile.release]
 lto = "fat"
