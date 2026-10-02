@@ -460,7 +460,7 @@ impl SearchApp {
     }
 
     /// Moves the selection up one row
-    fn move_up(&mut self) {
+    const fn move_up(&mut self) {
         if let Some(i) = self.list_state.selected()
             && i > 0
         {
@@ -469,7 +469,7 @@ impl SearchApp {
     }
 
     /// Moves the selection down one row
-    fn move_down(&mut self) {
+    const fn move_down(&mut self) {
         if let Some(i) = self.list_state.selected()
             && i.saturating_add(1) < self.filtered.len()
         {
