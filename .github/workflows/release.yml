@@ -59,7 +59,7 @@ jobs:
           cargo build --release
 
           mkdir -p target/.artifacts
-          mv "target/${{ matrix.target }}/release/stinkpot" \
+          mv "target/${{ matrix.target }}/release/stinkpot-rs" \
             "target/.artifacts/stinkpot-${{ matrix.target }}"
 
       - name: Upload Artifact

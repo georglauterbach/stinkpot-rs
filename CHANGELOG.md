@@ -8,8 +8,11 @@ All notable changes to this project will be documented in this file. The format 
 >
 > Changes listed in this section have not been published yet!
 
+## [0.1.4](https://github.com/georglauterbach/evergruv/releases/tag/0.1.4)
+
 - **Fixed**
   - resolved Clippy lints
+  - updated `mv` command in release pipeline
 
 ## [0.1.3](https://github.com/georglauterbach/evergruv/releases/tag/0.1.3)
 
