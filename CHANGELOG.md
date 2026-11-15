@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file. The format 
 >
 > Changes listed in this section have not been published yet!
 
+- **Fixed**
+  - resolved Clippy lints
+
 ## [0.1.3](https://github.com/georglauterbach/evergruv/releases/tag/0.1.3)
 
 - **Updated**

@@ -897,7 +897,7 @@ mod tests {
         assert_eq!(app.list_state.selected(), Some(2));
         app.query = "zzz-no-match".into();
         app.filter();
-        assert!(app.filtered.is_empty());
+        assert_eq!(app.filtered, [] as [usize; 0]);
         assert_eq!(app.list_state.selected(), None);
     }
 
@@ -932,7 +932,7 @@ mod tests {
             Tui::handle_key(&mut app, clear),
             KeyOutcome::Continue
         ));
-        assert!(app.query.is_empty());
+        assert_eq!(app.query, "");
         assert_eq!(app.cursor_col, 0);
     }
 }
