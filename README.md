@@ -1,4 +1,4 @@
-# `stinkpot-rs`
+# stinkpot-rs
 
 `stinkpot-rs` is a sqlite-backed shell-history searcher. It is a much tinier [Atuin](https://atuin.sh). Its goal is to be minimal: no AI, no sync, just SQLite-backed history search.
 

@@ -1,4 +1,4 @@
-_commit: 0.3.1
+_commit: 0.4.2
 _src_path: gh:georglauterbach/template.git
 code_binary_enabled: true
 code_library_enabled: false
@@ -11,8 +11,9 @@ lang_python_enabled: false
 lang_rust_enabled: true
 lang_shell_enabled: false
 project_changelog_enabled: true
+project_copyright_holder: Georg Lauterbach
 project_description: '`stinkpot-rs` is a sqlite-backed shell-history searcher. It
     is a much tinier [Atuin](https://atuin.sh). Its goal is to be minimal: no AI,
     no sync, just SQLite-backed history search.'
-project_license: ''
-project_name: stinkpot
+project_license: MIT
+project_name: stinkpot-rs

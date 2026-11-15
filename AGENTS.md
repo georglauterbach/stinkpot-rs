@@ -1,4 +1,4 @@
-# stinkpot - Agent Guide
+# stinkpot-rs - Agent Guide
 
 `stinkpot-rs` is a sqlite-backed shell-history searcher. It is a much tinier [Atuin](https://atuin.sh). Its goal is to be minimal: no AI, no sync, just SQLite-backed history search.
 
@@ -34,3 +34,13 @@ The project also uses [EditorConfig] for general-purpose style-enforcement.
 
 [Development Container]: https://containers.dev/
 [EditorConfig]: https://editorconfig.org/
+
+|Path|Purpose|
+|:-|:-|
+|`.devcontainer/`|[Development Container](https://containers.dev/) with the complete environment|
+|`.github/`|GitHub-related content like CI/CD, issues, etc.|
+|`Cargo.toml`|Rust package manifest|
+|`CHANGELOG.md`|Keep a Changelog history|
+|`cspell.config.yaml`|Spell-check configuration|
+|`README.md`|Project description|
+|`src/`|Rust sources|
