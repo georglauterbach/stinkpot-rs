@@ -23,7 +23,7 @@ jobs:
   release-build:
     name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
-    container: docker.io/rust:1.97.1-slim-trixie
+    container: docker.io/rust:1.100.0-slim-trixie
 
     strategy:
       fail-fast: false

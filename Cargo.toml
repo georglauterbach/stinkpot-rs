@@ -18,17 +18,17 @@ clap = { version = "4.6", default-features = true, features = [
 crossterm = { version = "0.29", default-features = false, features = ["events"] }
 fuzzy-matcher = { version = "0.3", default-features = false }
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
-rusqlite = { version = "0.40", default-features = true, features = ["bundled"] }
-thiserror = { version = "2.0.20", default-features = false }
+rusqlite = { version = "0.43", default-features = true, features = ["bundled"] }
+thiserror = { version = "2.0", default-features = false }
 
 [profile.release]
-lto = "fat"
+lto = "thin"
 codegen-units = 1
 strip = true
 
 [lints]
 
-# ref: https://doc.rust-lang.org/stable/clippy/index.html
+# > https://doc.rust-lang.org/stable/clippy/index.html
 [lints.clippy]
 # Enable all lints (correctness, suspicious, style, complexity, perf)
 all = { level = "deny", priority = -1 }
@@ -60,7 +60,7 @@ exit = "deny"
 missing_debug_implementations = "deny"
 missing_docs = "deny"
 
-# ref: https://doc.rust-lang.org/rustdoc/index.html
+# > https://doc.rust-lang.org/rustdoc/index.html
 [lints.rustdoc]
 all = { level = "deny", priority = 1 }
 broken_intra_doc_links = "deny"

@@ -4,8 +4,8 @@
     "dockerfile": "Dockerfile"
   },
   "features": {
-    "docker.packages.rsint.net/ghcr.io/georglauterbach/dev-container-features/lang-rust:0.5": {},
-    "docker.packages.rsint.net/ghcr.io/georglauterbach/dev-container-features/lang-sh:0.6": {}
+    "ghcr.io/georglauterbach/dev-container-features/lang-rust:0.5": {},
+    "ghcr.io/georglauterbach/dev-container-features/lang-sh:0.6": {}
   },
   "containerUser": "user",
   "remoteUser": "user",
@@ -22,5 +22,10 @@
         ]
       }
     }
-  }
+  },
+  "runArgs": [
+    // for compatibility with Podman
+    // > https://github.com/devcontainers/features/issues/1480
+    "--tmpfs=/tmp:rw,exec,nosuid,nodev,mode=1777"
+  ]
 }
